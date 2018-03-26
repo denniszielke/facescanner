@@ -1,0 +1,35 @@
+<!-- views/index.jade -->
+ 
+extends layout
+ 
+block content
+  div(style='width:400px')
+    h1=title
+    p=location
+    p Upload a picture of a head to get started!
+ 
+    form(action='/'       method='post' enctype="multipart/form-data")
+      input(type="file" name="userPhoto" accept="image/*" capture)
+      input(type="submit" value="Upload Image" name="submit")
+
+    img(src=image id=bobblehead)
+  p= shorturl
+  if shorturl
+    ul(class="share-buttons")
+        li
+        a(href="https://www.facebook.com/sharer/sharer.php?u="+shorturl+"&t=Check%20out%20the%20bobble%20head%20I%20created%20with%20Microsoft%20Azure.%20%23azurebobblehead" title="Share on Facebook" target="_blank")
+            img( src="images/flat_web_icon_set/color/Facebook.png")
+        li
+        a(href="https://twitter.com/intent/tweet?source=http%3A%2F%2Faka.ms%2Fbobblehead&text=Check%20out%20the%20bobble%20head%20I%20created%20with%20Microsoft%20Azure.%20%23azurebobblehead%20"+shorturl target="_blank" title="Tweet")
+            img( src="images/flat_web_icon_set/color/Twitter.png")
+        li
+        a(href="https://plus.google.com/share?url="+shorturl target="_blank" title="Share on Google+")
+            img( src="images/flat_web_icon_set/color/Google.png")
+        li
+        a(href="http://www.linkedin.com/shareArticle?mini=true&url=http%3A%2F%2Faka.ms%2Fbobblehead&title=My%20Azure%20Bobblehead&summary=Check%20out%20the%20bobble%20head%20I%20created%20with%20Microsoft%20Azure.%20%23azurebobblehead&source="+shorturl+"" target="_blank" title="Share on LinkedIn")
+            img( src="images/flat_web_icon_set/color/LinkedIn.png")
+        li
+        a(href="mailto:?subject=My%20Azure%20Bobblehead&body=Check%20out%20the%20bobble%20head%20I%20created%20with%20Microsoft%20Azure.%20%23azurebobblehead:%20"+shorturl target="_blank" title="Email")
+            img( src="images/flat_web_icon_set/color/Email.png")
+
+                

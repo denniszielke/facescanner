@@ -1,0 +1,146 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "deployment_name": {
+            "defaultValue": "dz1",
+            "type": "string",
+            "metadata": {
+                "description": "Short name of the deployment to ensure no name collisions"
+            }
+        },
+        "web_repo_url": {
+            "type": "string",
+            "defaultValue": "https://github.com/denniszielke/facescanner.git",
+            "metadata": {
+                "description": "The URL for the GitHub repository that contains the project to deploy."
+            }
+        }     
+    },
+    "variables": {
+        "databaseAccounts_face_name": "[concat(parameters('deployment_name'), 'facedb')]",
+        "accounts_face_name": "[concat(parameters('deployment_name'), 'face')]",
+        "components_faceinsights_name": "[concat(parameters('deployment_name'), 'faceinsights')]",
+        "serverfarms_webplan_name": "[concat(parameters('deployment_name'), 'webplan')]",
+        "sites_facedashboard_name": "[concat(parameters('deployment_name'), 'facedashboard')]",
+        "config_web_name": "[concat(parameters('deployment_name'), 'facedashboard/web')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-02-01-preview",
+            "name": "[parameters('name')]",
+            "location": "[resourceGroup().location]",
+            "type": "Microsoft.CognitiveServices/accounts",
+            "kind": "Face",
+            "sku": {
+                "name": "S0"
+            },
+            "properties": {}
+        },
+        {
+            "comments": "Generalized from resource:.",
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "kind": "MongoDB",
+            "name": "[variables('databaseAccounts_face_name')]",
+            "apiVersion": "2015-04-08",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "defaultExperience": "MongoDB"
+            },
+            "scale": null,
+            "properties": {
+                "databaseAccountOfferType": "Standard",
+                "consistencyPolicy": {
+                    "defaultConsistencyLevel": "Session",
+                    "maxIntervalInSeconds": 5,
+                    "maxStalenessPrefix": 100
+                },
+                "name": "[variables('databaseAccounts_face_name')]"
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "Generalized from resource:.",
+            "type": "microsoft.insights/components",
+            "kind": "Node.JS",
+            "name": "[variables('components_faceinsights_name')]",
+            "apiVersion": "2014-04-01",
+            "location": "northeurope",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "ApplicationId": "[variables('components_faceinsights_name')]"
+            },
+            "dependsOn": []
+        },
+        {
+            "apiVersion": "2016-03-01",
+            "name": "[variables('sites_facedashboard_name')]",
+            "type": "Microsoft.Web/sites",
+            "properties": {
+                "name": "[variables('sites_facedashboard_name')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                            "value": "false"
+                        },
+                        {
+                            "name": "PORT",
+                            "value": "80"
+                        },
+                        {
+                            "Value": "[reference(concat('microsoft.insights/components/', variables('components_socialinsights_name'))).InstrumentationKey]",
+                            "Name": "INSTRUMENTATIONKEY"
+                        },
+                        {
+                            "Value": "[reference(concat('microsoft.documentDb/databaseAccounts/', variables('databaseAccounts_socialdb_name'))).documentEndpoint]",
+                            "Name": "MONGO_ENDPOINT"
+                        },
+                        {
+                            "Value": "[listKeys(resourceId('microsoft.documentDb/databaseAccounts', variables('databaseAccounts_socialdb_name')), '2015-04-08').primaryMasterKey]",
+                            "Name": "MONGO_AUTHKEY"
+                        },
+                        {
+                            "Value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('accounts_textscore_name')), '2016-02-01-preview').key1]",
+                            "Name": "FACEAPI_KEY"
+                        },
+                        {
+                            "Value": "https://westus.api.cognitive.microsoft.com/text/analytics/v2.0",
+                            "Name": "FACEAPI_URL"
+                        }
+                    ],
+                    "appCommandLine": "",
+                    "linuxFxVersion": "DOCKER|nginx"
+                },
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverfarms_webplan_name'))]",
+                "hostingEnvironment": ""
+            },
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "[concat('hidden-related:', '/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('serverfarms_webplan_name'))]"
+            ]
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "name": "[variables('serverfarms_webplan_name')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "name": "[variables('serverfarms_webplan_name')]",
+                "workerSizeId": "0",
+                "reserved": true,
+                "numberOfWorkers": "1",
+                "hostingEnvironment": ""
+            },
+            "sku": {
+                "Tier": "Standard",
+                "Name": "S1"
+            },
+            "kind": "linux"
+        }
+    ]
+}
